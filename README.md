@@ -8,9 +8,11 @@ The model is built with **TensorFlow/Keras** and deployed using **Streamlit**.
 ## 🚀 Live Demo
 👉 [Click here to try the app](https://thyroid-detection-using-ultrasound-axvaqx8bxkfa72yjpxnj7h.streamlit.app/)
 
----
-
+```markdown
 ## 📂 Project Structure
+
+```
+
 .
 ├── app.py / streamlit\_app.py   # Streamlit web app
 ├── cnn\_thyroid\_model.h5        # Trained CNN model (Git LFS)
@@ -21,7 +23,6 @@ The model is built with **TensorFlow/Keras** and deployed using **Streamlit**.
 ├── .gitignore                  # Ignored files (venv, etc.)
 └── README.md                   # Project documentation
 
-````
 
 ---
 
