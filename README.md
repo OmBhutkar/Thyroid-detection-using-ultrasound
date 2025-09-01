@@ -56,6 +56,7 @@ streamlit run streamlit_app.py
 
   * `Benign`
   * `Malignant`
+  * `Normal Thyroid`
 
 ---
 
