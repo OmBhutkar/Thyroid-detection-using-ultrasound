@@ -1,4 +1,3 @@
-```markdown
 # 🧠 Thyroid Nodule Classification using Ultrasound (CNN + Streamlit)
 
 This project is a **deep learning-based web app** that classifies thyroid nodules as **Benign** or **Malignant** using ultrasound images.  
@@ -12,8 +11,6 @@ The model is built with **TensorFlow/Keras** and deployed using **Streamlit**.
 ---
 
 ## 📂 Project Structure
-```
-
 .
 ├── app.py / streamlit\_app.py   # Streamlit web app
 ├── cnn\_thyroid\_model.h5        # Trained CNN model (Git LFS)
@@ -101,5 +98,3 @@ streamlit run streamlit_app.py
 **Om Bhutkar**
 📌 [GitHub Profile](https://github.com/OmBhutkar)
 
-Do you want me to also add a **screenshot preview of your Streamlit app** (so visitors on GitHub see it before clicking the link)?
-```
