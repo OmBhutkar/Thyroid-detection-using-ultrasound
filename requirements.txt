@@ -3,3 +3,14 @@ tensorflow-cpu
 numpy
 Pillow
 scikit-learn
+plotly
+pandas
+reportlab
+opencv-python-headless
+pickle-mixin
+datetime
+io
+base64
+tempfile
+time
+os
