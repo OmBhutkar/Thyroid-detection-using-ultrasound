@@ -1,85 +1,59 @@
-# 🧠 Thyroid Nodule Classification using Ultrasound (CNN + Streamlit)
+# 🧬 AI Thyroid Nodule Classifier
 
-This project is a **deep learning-based web app** that classifies thyroid nodules as **Benign** or **Malignant** using ultrasound images.  
-The model is built with **TensorFlow/Keras** and deployed using **Streamlit**.
+A deep learning application for thyroid ultrasound image analysis using CNN. Classifies thyroid nodules as benign or malignant with professional PDF reporting.
 
----
+![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.x-red.svg)
 
-## 🚀 Live Demo
-👉 [Click here to try the app](https://thyroid-detection-using-ultrasound-axvaqx8bxkfa72yjpxnj7h.streamlit.app/)
+## ✨ Features
 
+- 🤖 **AI Classification**: CNN-based thyroid nodule analysis
+- 📊 **Confidence Scoring**: Detailed probability analysis  
+- 📄 **PDF Reports**: Professional medical reports with patient info
+- ⚡ **Real-time**: Instant results in under 2 seconds
+- 🎨 **Modern UI**: Interactive web interface
 
-## ⚙️ Installation & Usage (Run Locally)
+## 🚀 Quick Start
 
-1. **Clone the repository**  
-```bash
-git clone https://github.com/OmBhutkar/Thyroid-detection-using-ultrasound.git
-cd Thyroid-detection-using-ultrasound
-````
-
-2. **Create a virtual environment (optional but recommended)**
-
-```bash
-python -m venv venv
-venv\Scripts\activate   # On Windows
-```
-
-3. **Install dependencies**
-
+1. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Run the Streamlit app**
+2. **Add model files**
+- Place `cnn_thyroid_model.h5` and `label_encoder.pkl` in project directory
 
+3. **Run application**
 ```bash
 streamlit run streamlit_app.py
 ```
 
----
+4. **Open browser** → `http://localhost:8501`
 
-## 🖼️ How It Works
+## 📋 Usage
 
-1. Upload a thyroid **ultrasound image** (`.jpg`, `.jpeg`, `.png`).
-2. The image is preprocessed and passed into the trained **CNN model**.
-3. The model predicts whether the nodule is **Benign** or **Malignant**.
-4. The app displays the result with confidence score.
+1. Upload thyroid ultrasound image (JPG/PNG)
+2. View AI classification results
+3. Fill patient information
+4. Generate & download PDF report
 
----
+## 🔧 Requirements
 
-## 📊 Model Details
+- Python 3.8+
+- 4GB RAM minimum
+- Model files: `cnn_thyroid_model.h5`, `label_encoder.pkl`
 
-* **Architecture:** Convolutional Neural Network (CNN)
-* **Framework:** TensorFlow / Keras
-* **Input Size:** 128×128
-* **Output Classes:**
+## 👥 Team
 
-  * `Benign`
-  * `Malignant`
-  * `Normal Thyroid`
+**Developed By:** Yashvardhan Shinde | Sujal Patil | Ritesh Rodge | Omkar Varote  
+**Guided By:** Prof. Nutan Bansode  
+**Institution:** MIT Academy of Engineering, Alandi
 
----
+## ⚠️ Important Notice
 
-## 🛠️ Tech Stack
+**FOR RESEARCH PURPOSES ONLY** - This tool is designed for educational and research use. Always consult qualified healthcare professionals for medical decisions.
 
-* **Python 3.9+**
-* **TensorFlow / Keras**
-* **Streamlit**
-* **scikit-learn**
-* **Pillow**
-* **NumPy**
+## 📄 License
 
----
-
-## 🙌 Acknowledgements
-
-* Dataset: Thyroid ultrasound images (public medical imaging datasets).
-* Frameworks: TensorFlow, Streamlit, scikit-learn.
-
----
-
-## 👨‍💻 Author
-
-**Om Bhutkar**
-📌 [GitHub Profile](https://github.com/OmBhutkar)
-
+MIT License - See LICENSE file for details.
