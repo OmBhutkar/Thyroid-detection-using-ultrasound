@@ -44,12 +44,6 @@ streamlit run streamlit_app.py
 - 4GB RAM minimum
 - Model files: `cnn_thyroid_model.h5`, `label_encoder.pkl`
 
-## 👥 Team
-
-**Developed By:** Yashvardhan Shinde | Sujal Patil | Ritesh Rodge | Omkar Varote  
-**Guided By:** Prof. Nutan Bansode  
-**Institution:** MIT Academy of Engineering, Alandi
-
 ## ⚠️ Important Notice
 
 **FOR RESEARCH PURPOSES ONLY** - This tool is designed for educational and research use. Always consult qualified healthcare professionals for medical decisions.
