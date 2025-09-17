@@ -18,6 +18,7 @@ from datetime import datetime
 import io
 import base64
 import tempfile
+import json
 
 # --------------------------
 # App Config
@@ -80,6 +81,29 @@ st.markdown("""
         border: 1px solid #FF8C00;
     }
     
+    
+    
+    /* Voice button styling */
+    .voice-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    /* Speaking indicator animation */
+    .speaking-indicator {
+        animation: pulse 2s infinite;
+        color: #FF8C00;
+        font-weight: bold;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
     /* Sidebar styling */
     .css-1d391kg {
         background: rgba(0, 0, 0, 0.9) !important;
@@ -107,6 +131,17 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(255, 140, 0, 0.5);
         background: linear-gradient(45deg, #FF8C00, #000000);
+    }
+    
+    /* Voice buttons special styling */
+    .voice-button-start {
+        background: linear-gradient(45deg, #228B22, #32CD32) !important;
+        border: 2px solid #228B22 !important;
+    }
+    
+    .voice-button-stop {
+        background: linear-gradient(45deg, #DC143C, #FF6347) !important;
+        border: 2px solid #DC143C !important;
     }
     
     /* Download button special styling */
@@ -220,6 +255,412 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+def create_pdf_download_html(pdf_data, patient_name, report_id):
+    """Create a simple HTML page that triggers PDF download when opened from QR code"""
+    
+    # Encode PDF data to base64
+    pdf_b64 = base64.b64encode(pdf_data).decode('utf-8')
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Thyroid AI Report - Download</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+                color: white;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }}
+            .container {{
+                max-width: 500px;
+                background: rgba(255, 255, 255, 0.95);
+                color: black;
+                padding: 40px;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(255, 140, 0, 0.3);
+                border: 2px solid #FF8C00;
+                text-align: center;
+            }}
+            .header {{
+                color: #FF8C00;
+                margin-bottom: 30px;
+            }}
+            .download-btn {{
+                background: linear-gradient(45deg, #FF8C00, #FFA500);
+                color: white;
+                border: none;
+                padding: 15px 30px;
+                border-radius: 25px;
+                font-size: 18px;
+                font-weight: bold;
+                cursor: pointer;
+                margin: 20px 0;
+                box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+                transition: transform 0.2s;
+            }}
+            .download-btn:hover {{
+                transform: translateY(-2px);
+            }}
+            .info {{
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 10px;
+                margin: 20px 0;
+                border-left: 4px solid #FF8C00;
+            }}
+            .footer {{
+                margin-top: 30px;
+                color: #666;
+                font-size: 14px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📄 Thyroid AI Report</h1>
+                <h3>Ready for Download</h3>
+            </div>
+            
+            <div class="info">
+                <p><strong>Patient:</strong> {patient_name}</p>
+                <p><strong>Report ID:</strong> {report_id}</p>
+                <p><strong>Generated:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M")}</p>
+            </div>
+            
+            <button class="download-btn" onclick="downloadPDF()">
+                📥 Download PDF Report
+            </button>
+            
+            <p>Click the button above to download the complete medical report</p>
+            
+            <div class="footer">
+                <p><strong>MIT Academy of Engineering</strong></p>
+                <p>AI Thyroid Classifier - Research Use Only</p>
+            </div>
+        </div>
+        
+        <script>
+            function downloadPDF() {{
+                // Create a blob from the base64 data
+                const pdfData = '{pdf_b64}';
+                const byteCharacters = atob(pdfData);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {{
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }}
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {{type: 'application/pdf'}});
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'Thyroid_AI_Report_{patient_name.replace(" ", "_")}_{int(time.time())}.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                // Update button text
+                document.querySelector('.download-btn').innerHTML = '✅ Downloaded Successfully';
+                document.querySelector('.download-btn').style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+            }}
+            
+            // Auto-trigger download on mobile devices
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {{
+                setTimeout(() => {{
+                    downloadPDF();
+                }}, 1000);
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    
+    return html_content
+
+def create_viewable_report_html(prediction_results, patient_info=None):
+    """Create a viewable HTML report for display (not for QR code)"""
+    
+    patient_name = patient_info.get('name', 'Anonymous') if patient_info else 'Anonymous'
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Thyroid AI Report</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+                color: white;
+                min-height: 100vh;
+            }}
+            .container {{
+                max-width: 600px;
+                margin: 0 auto;
+                background: rgba(255, 255, 255, 0.95);
+                color: black;
+                padding: 30px;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(255, 140, 0, 0.3);
+                border: 2px solid #FF8C00;
+            }}
+            .header {{
+                text-align: center;
+                color: #FF8C00;
+                margin-bottom: 30px;
+            }}
+            .result {{
+                background: {'#e8f5e8' if prediction_results['prediction'].lower() == 'benign' else '#ffe8e8'};
+                padding: 20px;
+                border-radius: 10px;
+                margin: 20px 0;
+                border-left: 5px solid {'#28a745' if prediction_results['prediction'].lower() == 'benign' else '#dc3545'};
+            }}
+            .info-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin: 20px 0;
+            }}
+            .info-item {{
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 3px solid #FF8C00;
+            }}
+            .footer {{
+                text-align: center;
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 2px solid #FF8C00;
+                color: #666;
+            }}
+            .disclaimer {{
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+                color: #856404;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px 0;
+                font-size: 14px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1> AI Thyroid Analysis Report</h1>
+                <h3>Digital Summary</h3>
+            </div>
+            
+            <div class="result">
+                <h2>Classification: {prediction_results['prediction'].upper()}</h2>
+                <h3>Confidence: {prediction_results['confidence']:.1f}%</h3>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Patient:</strong><br>
+                    {patient_name}
+                </div>
+                <div class="info-item">
+                    <strong>Report ID:</strong><br>
+                    THY-AI-{int(time.time())}
+                </div>
+                <div class="info-item">
+                    <strong>Date & Time:</strong><br>
+                    {datetime.now().strftime("%Y-%m-%d %H:%M")}
+                </div>
+                <div class="info-item">
+                    <strong>Institution:</strong><br>
+                    MIT Academy of Engineering
+                </div>
+            </div>
+            
+            <div class="disclaimer">
+                <strong>⚠ Important:</strong> This AI analysis is for research purposes only. 
+                Always consult qualified healthcare professionals for medical decisions.
+            </div>
+            
+            <div class="footer">
+                <p><strong>Generated by AI Thyroid Classifier</strong></p>
+                <p>MIT Academy of Engineering, Alandi</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html_content
+# --------------------------
+# Web-based Voice Functions using Browser's Speech Synthesis API
+# --------------------------
+def generate_voice_summary(prediction_results, patient_name=None):
+    """Generate a voice summary text of the analysis results"""
+    prediction = prediction_results['prediction']
+    confidence = prediction_results['confidence']
+    
+    # Create voice summary text
+    if patient_name:
+        summary = f"Voice Report for patient {patient_name}. "
+    else:
+        summary = "AI Thyroid Analysis Voice Report. "
+    
+    summary += f"The artificial intelligence analysis has classified this thyroid nodule as {prediction.upper()}. "
+    
+    if prediction.lower() == 'benign':
+        summary += f"This indicates a non-cancerous nodule. The confidence level is {confidence:.1f} percent. "
+    else:
+        summary += f"This indicates a potentially cancerous nodule requiring immediate medical attention. The confidence level is {confidence:.1f} percent. "
+    
+    if confidence >= 90:
+        summary += "The AI model shows very high confidence in this prediction. "
+    elif confidence >= 70:
+        summary += "The AI model shows moderate confidence in this prediction. "
+    else:
+        summary += "The AI model shows low confidence in this prediction. Additional clinical evaluation is strongly recommended. "
+    
+    summary += "Please note that this AI analysis is for research purposes only and should not replace professional medical diagnosis. "
+    
+    if prediction.lower() == 'malignant':
+        summary += "Immediate consultation with a healthcare professional is advised. "
+    else:
+        summary += "Continue routine monitoring as per medical guidelines. "
+    
+    summary += "This concludes the voice report. Thank you."
+    
+    return summary
+
+def create_speech_component(text_to_speak, button_id):
+    """Create HTML/JavaScript component for web-based speech synthesis"""
+    
+    # Escape text for JavaScript
+    escaped_text = json.dumps(text_to_speak)
+    
+    html_code = f"""
+    <div id="speech-container-{button_id}" style="text-align: center; margin: 20px 0;">
+        <button id="speak-btn-{button_id}" onclick="speakText{button_id}()" 
+                style="background: linear-gradient(45deg, #228B22, #32CD32); 
+                       color: white; border: none; padding: 12px 24px; 
+                       border-radius: 25px; font-size: 16px; font-weight: bold; 
+                       cursor: pointer; margin: 5px; box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);">
+            🔊 Start Voice Report
+        </button>
+        
+        <button id="stop-btn-{button_id}" onclick="stopSpeech{button_id}()" 
+                style="background: linear-gradient(45deg, #DC143C, #FF6347); 
+                       color: white; border: none; padding: 12px 24px; 
+                       border-radius: 25px; font-size: 16px; font-weight: bold; 
+                       cursor: pointer; margin: 5px; box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);">
+            ⏹️ Stop Voice Report
+        </button>
+        
+        <div id="status-{button_id}" style="margin-top: 10px; font-weight: bold; color: #FF8C00;"></div>
+    </div>
+
+    <script>
+        let currentUtterance{button_id} = null;
+        let isCurrentlySpeaking{button_id} = false;
+
+        function speakText{button_id}() {{
+            // Stop any existing speech
+            if (isCurrentlySpeaking{button_id}) {{
+                stopSpeech{button_id}();
+                return;
+            }}
+
+            // Check if speech synthesis is supported
+            if (!('speechSynthesis' in window)) {{
+                document.getElementById('status-{button_id}').innerHTML = '❌ Speech synthesis not supported in this browser';
+                return;
+            }}
+
+            const textToSpeak = {escaped_text};
+            
+            // Create new utterance
+            currentUtterance{button_id} = new SpeechSynthesisUtterance(textToSpeak);
+            
+            // Configure voice settings
+            currentUtterance{button_id}.rate = 0.8;  // Slower speech
+            currentUtterance{button_id}.pitch = 1.0;
+            currentUtterance{button_id}.volume = 0.9;
+            
+            // Try to set a professional voice
+            const voices = speechSynthesis.getVoices();
+            if (voices.length > 0) {{
+                // Prefer female or clear voices
+                const preferredVoice = voices.find(voice => 
+                    voice.name.includes('Female') || 
+                    voice.name.includes('Google') ||
+                    voice.name.includes('Microsoft Zira') ||
+                    voice.lang.startsWith('en')
+                );
+                if (preferredVoice) {{
+                    currentUtterance{button_id}.voice = preferredVoice;
+                }}
+            }}
+
+            // Event handlers
+            currentUtterance{button_id}.onstart = function() {{
+                isCurrentlySpeaking{button_id} = true;
+                document.getElementById('status-{button_id}').innerHTML = '🔊 <span class="speaking-indicator">Currently Speaking...</span>';
+                document.getElementById('speak-btn-{button_id}').innerHTML = '🔊 Speaking...';
+                document.getElementById('speak-btn-{button_id}').style.background = 'linear-gradient(45deg, #FF8C00, #FFA500)';
+            }};
+
+            currentUtterance{button_id}.onend = function() {{
+                isCurrentlySpeaking{button_id} = false;
+                document.getElementById('status-{button_id}').innerHTML = '✅ Voice report completed';
+                document.getElementById('speak-btn-{button_id}').innerHTML = '🔊 Start Voice Report';
+                document.getElementById('speak-btn-{button_id}').style.background = 'linear-gradient(45deg, #228B22, #32CD32)';
+            }};
+
+            currentUtterance{button_id}.onerror = function(event) {{
+                isCurrentlySpeaking{button_id} = false;
+                document.getElementById('status-{button_id}').innerHTML = '❌ Error: ' + event.error;
+                document.getElementById('speak-btn-{button_id}').innerHTML = '🔊 Start Voice Report';
+                document.getElementById('speak-btn-{button_id}').style.background = 'linear-gradient(45deg, #228B22, #32CD32)';
+            }};
+
+            // Start speaking
+            document.getElementById('status-{button_id}').innerHTML = '🎵 Preparing voice report...';
+            speechSynthesis.speak(currentUtterance{button_id});
+        }}
+
+        function stopSpeech{button_id}() {{
+            if (speechSynthesis.speaking || isCurrentlySpeaking{button_id}) {{
+                speechSynthesis.cancel();
+                isCurrentlySpeaking{button_id} = false;
+                document.getElementById('status-{button_id}').innerHTML = '🔇 Voice report stopped';
+                document.getElementById('speak-btn-{button_id}').innerHTML = '🔊 Start Voice Report';
+                document.getElementById('speak-btn-{button_id}').style.background = 'linear-gradient(45deg, #228B22, #32CD32)';
+            }}
+        }}
+
+        // Load voices when available
+        if (speechSynthesis.onvoiceschanged !== undefined) {{
+            speechSynthesis.onvoiceschanged = function() {{
+                // Voices are now loaded
+            }};
+        }}
+    </script>
+    """
+    
+    return html_code
 
 # --------------------------
 # Load Model & Encoder (cached for performance)
@@ -382,9 +823,11 @@ def create_enhanced_pdf_report(patient_info, prediction_results, image_data=None
     if prediction.lower() == 'benign':
         result_color = colors.HexColor('#228B22')
         result_text = "BENIGN (NON-CANCEROUS)"
+        predicted_conf = prediction_results['benign_conf']
     else:
         result_color = colors.HexColor('#DC143C')
         result_text = "MALIGNANT (POTENTIALLY CANCEROUS)"
+        predicted_conf = prediction_results['malignant_conf']
     
     result_para = Paragraph(
         f"<b>CLASSIFICATION:</b> {result_text}<br/><b>CONFIDENCE LEVEL:</b> {confidence:.1f}%",
@@ -394,18 +837,15 @@ def create_enhanced_pdf_report(patient_info, prediction_results, image_data=None
     story.append(result_para)
     story.append(Spacer(1, 10))
     
-    # Confidence breakdown table
+    # Single prediction confidence table (only showing predicted class)
     confidence_data = [
         ['Classification Category', 'Probability', 'Confidence Level', 'Clinical Interpretation'],
-        ['Benign (Non-cancerous)', f"{prediction_results['benign_conf']:.2f}%", 
-         get_confidence_level(prediction_results['benign_conf']), 
-         'Routine monitoring may be sufficient'],
-        ['Malignant (Cancerous)', f"{prediction_results['malignant_conf']:.2f}%", 
-         get_confidence_level(prediction_results['malignant_conf']), 
-         'Further evaluation recommended']
+        [result_text, f"{predicted_conf:.2f}%", 
+         get_confidence_level(predicted_conf), 
+         'Further evaluation recommended' if prediction.lower() == 'malignant' else 'Routine monitoring may be sufficient']
     ]
     
-    confidence_table = Table(confidence_data, colWidths=[1.5*inch, 1*inch, 1.2*inch, 2.3*inch])
+    confidence_table = Table(confidence_data, colWidths=[2*inch, 1.2*inch, 1.3*inch, 2.5*inch])
     confidence_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F0F0F0')),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -597,30 +1037,36 @@ def preprocess_image(img):
     return img_array
 
 # --------------------------
-# Create Confidence Chart
+# Create Single Confidence Chart (Updated)
 # --------------------------
-def create_confidence_chart(benign_conf, malignant_conf):
-    """Create an interactive confidence chart"""
-    fig = make_subplots(
-        rows=1, cols=2,
-        specs=[[{"type": "indicator"}, {"type": "indicator"}]],
-        subplot_titles=("Benign Confidence", "Malignant Confidence"),
-        horizontal_spacing=0.1
-    )
+def create_confidence_chart(prediction, confidence, class_label):
+    """Create an interactive confidence chart showing only the predicted class"""
+    
+    # Determine color based on prediction
+    if class_label.lower() == 'benign':
+        bar_color = "#228B22"
+        title_text = "Benign Confidence"
+        step_color = "#90EE90"
+    else:
+        bar_color = "#DC143C" 
+        title_text = "Malignant Confidence"
+        step_color = "#FFB6C1"
+    
+    fig = go.Figure()
     
     fig.add_trace(go.Indicator(
         mode = "gauge+number+delta",
-        value = benign_conf,
+        value = confidence,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Benign", 'font': {'color': "white", 'size': 18}},
+        title = {'text': title_text, 'font': {'color': "white", 'size': 20}},
         delta = {'reference': 50, 'font': {'color': "white"}},
-        number = {'font': {'color': "white", 'size': 24}},
+        number = {'font': {'color': "white", 'size': 28}},
         gauge = {
             'axis': {'range': [None, 100], 'tickfont': {'color': "white"}},
-            'bar': {'color': "#FF8C00"},
+            'bar': {'color': bar_color},
             'steps': [
                 {'range': [0, 50], 'color': "#333333"},
-                {'range': [50, 100], 'color': "#FFE4B5"}
+                {'range': [50, 100], 'color': step_color}
             ],
             'threshold': {
                 'line': {'color': "#FF8C00", 'width': 4},
@@ -628,53 +1074,22 @@ def create_confidence_chart(benign_conf, malignant_conf):
                 'value': 90
             }
         }
-    ), row=1, col=1)
-    
-    fig.add_trace(go.Indicator(
-        mode = "gauge+number+delta",
-        value = malignant_conf,
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Malignant", 'font': {'color': "white", 'size': 18}},
-        delta = {'reference': 50, 'font': {'color': "white"}},
-        number = {'font': {'color': "white", 'size': 24}},
-        gauge = {
-            'axis': {'range': [None, 100], 'tickfont': {'color': "white"}},
-            'bar': {'color': "#dc3545"},
-            'steps': [
-                {'range': [0, 50], 'color': "#333333"},
-                {'range': [50, 100], 'color': "#f8d7da"}
-            ],
-            'threshold': {
-                'line': {'color': "#FF8C00", 'width': 4},
-                'thickness': 0.75,
-                'value': 90
-            }
-        }
-    ), row=1, col=2)
+    ))
     
     fig.update_layout(
-        height=350,
+        height=400,
         paper_bgcolor="rgba(0,0,0,0.8)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={'color': "white", 'family': "Arial"},
-        margin=dict(l=20, r=20, t=60, b=20),
-        annotations=[
-            dict(
-                text="Benign Confidence",
-                x=0.225, y=1.1,
-                xref="paper", yref="paper",
-                font=dict(color="white", size=16),
-                showarrow=False
-            ),
-            dict(
-                text="Malignant Confidence", 
-                x=0.775, y=1.1,
-                xref="paper", yref="paper",
-                font=dict(color="white", size=16),
-                showarrow=False
-            )
-        ],
-        showlegend=False
+        margin=dict(l=40, r=40, t=80, b=40),
+        title={
+            'text': f"<b>{class_label.upper()} Classification Confidence</b>",
+            'x': 0.5,
+            'y': 0.95,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 18, 'color': 'white'}
+        }
     )
     
     return fig
@@ -699,6 +1114,7 @@ with st.sidebar:
             <li>Upload ultrasound image</li>
             <li>AI analyzes the image</li>
             <li>Get classification results</li>
+            <li>Listen to voice summary</li>
             <li>Generate detailed PDF report</li>
             <li>Download professional report</li>
         </ol>
@@ -723,6 +1139,8 @@ with st.sidebar:
     if model_loaded:
         st.success("✅ AI Model: Ready")
         st.success("✅ PDF Generator: Ready")
+        st.success("✅ Voice Engine: Browser-based TTS")
+        st.success("✅ Digital Report Preview : Ready")
     else:
         st.error("❌ AI Model: Not Available")
     
@@ -738,7 +1156,7 @@ st.markdown("""
         🧬 AI Thyroid Nodule Classifier
     </h1>
     <p style='text-align: center; color: #FF8C00; margin: 1rem 0 0 0; font-size: 1.2rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);'>
-        Advanced deep learning for thyroid ultrasound analysis with professional reporting
+        Advanced deep learning for thyroid ultrasound analysis with professional reporting and voice summaries
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -769,15 +1187,13 @@ if uploaded_image is not None:
         
         # Image info
         st.markdown(f"""
-        📊 **Image Details:**
-        - **Size:** {img.size[0]} × {img.size[1]} pixels
-        - **Format:** {img.format}
-        - **Mode:** {img.mode}
+        📊 *Image Details:*
+        - *Size:* {img.size[0]} × {img.size[1]} pixels
+        - *Format:* {img.format}
+        - *Mode:* {img.mode}
         """)
-        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
-        
         # Add processing animation
         with st.spinner('🧠 AI is analyzing your image...'):
             # Simulate processing time for better UX
@@ -813,166 +1229,266 @@ if uploaded_image is not None:
         
         # Main prediction with enhanced styling
         if class_label.lower() == 'benign':
-            st.success(f"✅ **Prediction: BENIGN** ({benign_conf:.1f}% confidence)")
+            st.success(f"✅ *Prediction: BENIGN* ({benign_conf:.1f}% confidence)")
         elif class_label.lower() == 'malignant':
-            st.error(f"⚠ **Prediction: MALIGNANT** ({malignant_conf:.1f}% confidence)")
+            st.error(f"⚠ *Prediction: MALIGNANT* ({malignant_conf:.1f}% confidence)")
         else:
-            st.warning(f"❓ **Unknown classification:** {class_label}")
+            st.warning(f"❓ *Unknown classification:* {class_label}")
         
         # Confidence level interpretation
         if max_confidence >= 90:
-            st.success("🔒 **High Confidence** - Very reliable prediction")
+            st.success("🔒 *High Confidence* - Very reliable prediction")
         elif max_confidence >= 70:
-            st.warning("🔍 **Moderate Confidence** - Reasonably reliable")
+            st.warning("🔍 *Moderate Confidence* - Reasonably reliable")
         else:
-            st.error("❗ **Low Confidence** - Consider additional analysis")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.error("❗ *Low Confidence* - Consider additional analysis")
     
     # Detailed Analysis Section
     st.markdown("---")
     st.markdown("### 📈 Detailed Confidence Analysis")
     
-    # Interactive confidence chart
-    chart = create_confidence_chart(benign_conf, malignant_conf)
+    # Interactive confidence chart - now shows only predicted class
+    chart = create_confidence_chart(st.session_state.prediction_results['prediction'], 
+                                   st.session_state.prediction_results['confidence'],
+                                   st.session_state.prediction_results['prediction'])
     st.plotly_chart(chart, use_container_width=True)
     
-    # Detailed metrics
-    col3, col4, col5 = st.columns(3)
+    # Single metric for predicted class only
+    st.markdown("#### 🎯 Prediction Metrics")
     
-    with col3:
-        st.metric(
-            label="🟢 Benign Probability",
-            value=f"{benign_conf:.2f}%",
-            delta=f"{benign_conf - 50:.1f}% vs baseline"
-        )
-    
-    with col4:
-        st.metric(
-            label="🔴 Malignant Probability", 
-            value=f"{malignant_conf:.2f}%",
-            delta=f"{malignant_conf - 50:.1f}% vs baseline"
-        )
-    
-    with col5:
-        st.metric(
-            label="🎯 Confidence Level",
-            value=f"{max_confidence:.1f}%",
-            delta="Prediction strength"
-        )
+    if st.session_state.prediction_results['prediction'].lower() == 'benign':
+        col_center = st.columns([1, 2, 1])[1]  # Center the metric
+        with col_center:
+            st.metric(
+                label="🟢 Benign Probability",
+                value=f"{benign_conf:.2f}%",
+                delta=f"{benign_conf - 50:.1f}% vs baseline"
+            )
+    else:
+        col_center = st.columns([1, 2, 1])[1]  # Center the metric
+        with col_center:
+            st.metric(
+                label="🔴 Malignant Probability", 
+                value=f"{malignant_conf:.2f}%",
+                delta=f"{malignant_conf - 50:.1f}% vs baseline"
+            )
     
     # --------------------------
-    # Enhanced PDF Report Section
+    # VOICE REPORTS SECTION (NEW)
     # --------------------------
     st.markdown("---")
-    st.markdown("### 📄 Generate Professional Medical Report")
+    st.markdown("""
+    <div class="voice-section">
+        <h2 style='color: #FF8C00; text-align: center; margin-bottom: 2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>
+            🔊 Voice Report Summary
+        </h2>
+    """, unsafe_allow_html=True)
     
-    # Patient information form
-    st.markdown("#### 👤 Patient Information")
+    st.markdown("#### 🎵 Audio Summary for Accessibility")
+    st.markdown("Listen to a comprehensive voice summary of the AI analysis results")
     
-    col_form1, col_form2 = st.columns(2)
+    # Generate voice summary text
+    voice_text = generate_voice_summary(st.session_state.prediction_results)
     
-    with col_form1:
-        patient_name = st.text_input("Patient Name", placeholder="Enter patient full name")
-        patient_id = st.text_input("Patient ID", placeholder="Enter patient ID")
-        age = st.text_input("Age", placeholder="Enter age")
+    # Create and display the speech component
+    speech_component = create_speech_component(voice_text, "main")
+    st.components.v1.html(speech_component, height=120)
     
-    with col_form2:
-        gender = st.selectbox("Gender", ["Select", "Male", "Female", "Other"])
-        scan_date = st.date_input("Scan Date", datetime.now().date())
-        physician = st.text_input("Referring Physician", placeholder="Dr. Name")
+    # Show the text being spoken in an expander
+    with st.expander("📝 View Voice Report Text"):
+        st.markdown(f"**Voice Summary:**\n\n{voice_text}")
     
-    st.markdown("#### 🎯 Report Generation")
+    # Voice features info
+    st.markdown("---")
+    st.markdown("#### 🎧 Voice Features")
     
-    generate_pdf = st.button("📄 Generate Enhanced PDF Report", 
-                            type="primary", 
-                            use_container_width=True,
-                            help="Generate a comprehensive professional medical report")
+    voice_col1, voice_col2 = st.columns(2)
     
-    # Generate Enhanced PDF Report
-    if generate_pdf and st.session_state.get('analysis_complete', False):
-        if not patient_name:
-            st.error("❗ Please enter patient name to generate report.")
-        else:
-            with st.spinner("📄 Generating comprehensive PDF report..."):
-                # Prepare patient info
-                patient_info = {
-                    'name': patient_name,
-                    'patient_id': patient_id if patient_id else 'N/A',
-                    'age': age if age else 'N/A',
-                    'gender': gender if gender != 'Select' else 'N/A',
-                    'scan_date': scan_date.strftime("%B %d, %Y"),
-                    'physician': physician if physician else 'N/A'
-                }
-                
-                # Generate Enhanced PDF
-                try:
-                    pdf_buffer = create_enhanced_pdf_report(patient_info, st.session_state.prediction_results)
-                    st.session_state.pdf_buffer = pdf_buffer
-                    st.session_state.pdf_generated = True
-                    st.session_state.patient_name = patient_name
-                    
-                    st.success("✅ Enhanced PDF report generated successfully!")
-                    st.balloons()
-                    
-                    # Show download button
-                    filename = f"Enhanced_Thyroid_Report_{patient_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
-                    
-                    st.download_button(
-                        label="⬇️ Download Enhanced PDF Report",
-                        data=pdf_buffer.getvalue(),
-                        file_name=filename,
-                        mime="application/pdf",
-                        use_container_width=True,
-                        type="secondary",
-                        help="Download the comprehensive medical report"
-                    )
-                    
-                except Exception as e:
-                    st.error(f"❌ Error generating PDF: {str(e)}")
+    with voice_col1:
+        st.info("""
+        **🎯 Voice Report Includes:**
+        - Patient classification results
+        - Confidence level explanation  
+        - Clinical interpretation
+        - Medical recommendations
+        - Important disclaimers
+        """)
+    
+    with voice_col2:
+        st.info("""
+        **♿ Accessibility Benefits:**
+        - Hands-free report review
+        - Support for visually impaired users
+        - Multi-modal information delivery
+        - Enhanced user experience
+        - Professional narration
+        """)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Additional Information
+    # --------------------------
+    # QR CODE INTEGRATION SECTION (NEW)
+    # --------------------------
     st.markdown("---")
-    st.markdown("### 💡 Understanding Your Results")
+    # Create viewable HTML report for preview
+    html_report = create_viewable_report_html(st.session_state.prediction_results, {'name': st.session_state.get('patient_name', 'Anonymous')})
     
-    with st.expander("📚 What do these results mean?", expanded=False):
-        st.markdown("""
-        **Benign Nodules:**
-        - Non-cancerous growths that are generally harmless
-        - May require monitoring but typically don't need aggressive treatment
-        - Very common, especially in older adults
-        
-        **Malignant Nodules:**
-        - Potentially cancerous growths requiring immediate medical attention
-        - Early detection significantly improves treatment outcomes
-        - Require comprehensive evaluation by healthcare professionals
-        
-        **Important:** This AI tool provides preliminary analysis only. Always consult with qualified medical professionals for proper diagnosis and treatment planning.
-        """)
+    # HTML Report preview section
+    st.markdown("---")
+    st.markdown("#### 🌐 Digital Report Preview")
+    st.markdown("Preview the full digital report for sharing")
     
-    with st.expander("🔬 About the Enhanced AI Model", expanded=False):
-        st.markdown("""
-        **Model Architecture:** Advanced Convolutional Neural Network (CNN)
+    if st.button("🌐 Open Full Digital Report", key="preview_digital"):
+        # Encode the HTML for data URL
+        encoded_html = base64.b64encode(html_report.encode('utf-8')).decode('utf-8')
+        data_url = f"data:text/html;base64,{encoded_html}"
+        st.components.v1.html(f'<iframe src="{data_url}" width="100%" height="600" style="border: 2px solid #FF8C00; border-radius: 10px;"></iframe>', height=650)
+    
+    # --------------------------
+    # PATIENT INFORMATION SECTION (REPORT GENERATION)
+    # --------------------------
+    st.markdown("---")
+    st.markdown("""
+    <div class="report-section">
+        <h2 style='color: #FF8C00; text-align: center; margin-bottom: 2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>
+            📋 Generate Professional Medical Report
+        </h2>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("#### 👤 Patient Information")
+    st.markdown("Fill in patient details for comprehensive report generation")
+    
+    # Create two columns for patient information
+    col_left, col_right = st.columns(2, gap="medium")
+    
+    with col_left:
+        patient_name = st.text_input("👤 Patient Name", 
+                                   placeholder="Enter patient's full name")
+        patient_id = st.text_input("🆔 Patient ID", 
+                                 placeholder="Enter patient ID/MRN")
+        patient_age = st.number_input("🎂 Age", min_value=1, max_value=120, 
+                                    value=None, placeholder="Age in years")
+    
+    with col_right:
+        patient_gender = st.selectbox("⚧ Gender", 
+                                    ["", "Male", "Female", "Other", "Prefer not to say"],
+                                    index=0)
+        scan_date = st.date_input("📅 Scan Date", 
+                                value=datetime.now().date(),
+                                help="Date when the ultrasound was performed")
+        physician_name = st.text_input("👨‍⚕ Referring Physician", 
+                                     placeholder="Dr. Name")
+    
+    # Additional clinical information
+    st.markdown("#### 📝 Additional Clinical Information")
+    clinical_notes = st.text_area("Clinical Notes (Optional)", 
+                                 placeholder="Any additional clinical observations, symptoms, or relevant patient history...",
+                                 height=100)
+    
+    # Report generation section
+    st.markdown("---")
+    st.markdown("#### 📄 Report Generation")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        if st.button("🔄 Generate Professional PDF Report", 
+                    use_container_width=True,
+                    help="Generate a comprehensive medical report with patient information and analysis results"):
+            
+            if not patient_name.strip():
+                st.error("⚠ Please enter patient name to generate report")
+            else:
+                with st.spinner("📝 Generating comprehensive PDF report..."):
+                    # Prepare patient information
+                    patient_info = {
+                        'name': patient_name.strip(),
+                        'patient_id': patient_id.strip() if patient_id.strip() else "Not Assigned",
+                        'age': patient_age,
+                        'gender': patient_gender if patient_gender else "Not Specified",
+                        'scan_date': scan_date.strftime("%B %d, %Y"),
+                        'physician': physician_name.strip() if physician_name.strip() else "Not Specified",
+                        'clinical_notes': clinical_notes.strip() if clinical_notes.strip() else "None provided"
+                    }
+                    
+                    # Generate the PDF report
+                    pdf_buffer = create_enhanced_pdf_report(
+                        patient_info, 
+                        st.session_state.prediction_results
+                    )
+                    
+                    # Store in session state
+                    st.session_state.pdf_report = pdf_buffer.getvalue()
+                    st.session_state.report_generated = True
+                    st.session_state.patient_name = patient_name.strip()
+                    
+                st.success("✅ Report generated successfully!")
+                st.balloons()
+    
+    # Enhanced voice report with patient name
+    if patient_name.strip() and st.session_state.analysis_complete:
+        st.markdown("---")
+        st.markdown("#### 🎤 Personalized Voice Report")
         
-        **Training Data:** Thousands of validated thyroid ultrasound images
+        # Generate personalized voice summary
+        personal_voice_text = generate_voice_summary(
+            st.session_state.prediction_results,
+            patient_name.strip()
+        )
         
-        **Input Requirements:** 128×128 pixel images, normalized RGB values
+        # Create and display the personalized speech component
+        personal_speech_component = create_speech_component(personal_voice_text, "personal")
+        st.components.v1.html(personal_speech_component, height=120)
         
-        **Performance:** Optimized for distinguishing benign and malignant patterns
+        # Show personalized text in expander
+        with st.expander("📝 View Personalized Voice Report Text"):
+            st.markdown(f"**Personalized Voice Summary for {patient_name.strip()}:**\n\n{personal_voice_text}")
+    
+    # Download section
+    if 'report_generated' in st.session_state and st.session_state.report_generated:
+        st.markdown("---")
+        st.markdown("#### 📥 Download Report")
         
-        **Enhanced Features:**
-        - Multi-layer feature extraction
-        - Advanced preprocessing pipeline
-        - Confidence calibration
-        - Quality assessment integration
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            # Generate filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            patient_name_clean = "".join(c for c in patient_name.replace(" ", "") if c.isalnum() or c in ".-")
+            filename = f"Thyroid_AI_Report_{patient_name_clean}_{timestamp}.pdf"
+            
+            st.download_button(
+                label="📥 Download Professional Report",
+                data=st.session_state.pdf_report,
+                file_name=filename,
+                mime="application/pdf",
+                use_container_width=True,
+                help="Download the complete medical analysis report"
+            )
         
-        **Limitations:** Results depend on image quality and may not capture all clinical factors
-        """)
+        # Report summary
+        st.markdown("---")
+        st.markdown("#### 📊 Report Summary")
+        
+        summary_col1, summary_col2 = st.columns(2)
+        
+        with summary_col1:
+            st.info(f"""
+            *Patient:* {patient_name}
+            *ID:* {patient_id if patient_id.strip() else 'Not Assigned'}
+            *Classification:* {st.session_state.prediction_results['prediction'].upper()}
+            """)
+        
+        with summary_col2:
+            st.info(f"""
+            *Confidence:* {st.session_state.prediction_results['confidence']:.1f}%
+            *Scan Date:* {scan_date.strftime("%B %d, %Y")}
+            *Report Generated:* {datetime.now().strftime("%Y-%m-%d %H:%M")}
+            """)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    # Welcome message with better styling
+    # Welcome message with better styling - This appears when no image is uploaded
     st.markdown("""
     <div class="prediction-card" style="text-align: center; padding: 3rem;">
         <h2 style="color: #FF8C00; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);">👆 Ready for Analysis</h2>
@@ -986,22 +1502,25 @@ else:
                 <div>📊 Confidence Scoring</div>
                 <div>⚡ Instant Results</div>
                 <div>📈 Interactive Charts</div>
+                <div>🔊 Voice Reports</div>
                 <div>📄 Enhanced PDF Reports</div>
                 <div>👤 Patient Management</div>
                 <div>🏥 Professional Formatting</div>
+                <div>♿ Accessibility Features</div>
                 <div>🔬 Technical Analysis</div>
             </div>
         </div>
-        
     </div>
     """, unsafe_allow_html=True)
 
-# Simple Footer
+# --------------------------
+# Footer Section - Always appears at the bottom
+# --------------------------
 st.markdown("---")
 st.markdown("""
 <div class='simple-footer'>
     <div class='footer-text'>
-        Developed By :- Yashvardhan Shinde | Sujal Patil | Ritesh Rodge | Omkar Varote
+        Developed By: Yashvardhan Shinde | Sujal Patil | Ritesh Rodge | Omkar Varote
     </div>
     <div class='footer-text'>
         Guided By: Prof. Nutan Bansode
@@ -1011,7 +1530,7 @@ st.markdown("""
         MIT Academy of Engineering, Alandi
     </div>
     <div class='footer-text' style='font-size: 1rem; margin-top: 1rem;'>
-        🧬 Enhanced AI Analysis | 📄 Professional Reports | For Research Use Only
+        🧬 Enhanced AI Analysis | 🔊 Voice Reports | 📱 QR Access | 📄 Professional Reports | For Research Use Only
     </div>
 </div>
 """, unsafe_allow_html=True)
